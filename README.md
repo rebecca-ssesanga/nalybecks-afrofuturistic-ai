@@ -1,125 +1,109 @@
-👑 Nalybecks Afrofuturistic AI (WIP)
+# 👑 Nalybecks Afrofuturistic AI (WIP)
 
-Wear Your Crown Beautifully — powered by AI
+**Wear Your Crown Beautifully — powered by AI**
 
-Nalybecks Afrofuturistic AI is a work-in-progress beauty-tech AI project exploring how computer vision and machine learning can support African-centered hairstyle try-on experiences.
+Nalybecks Afrofuturistic AI is a **work-in-progress beauty-tech AI project** exploring how **computer vision and machine learning** can support **African-centered hairstyle try-on experiences**.
 
-This repository contains an early MVP, focused on validating the technical pipeline and learning constraints before moving into generative models.
+This repository contains an **early MVP**, focused on validating the technical pipeline and learning constraints before moving into generative models.
 
-🚧 Project Status
+---
 
-⚠️ Work in Progress (MVP stage)
-This is not a final product. The current implementation prioritizes:
+## 🚧 Project Status
 
-Learning
+⚠️ **Work in Progress (MVP stage)**
+This is **not a final product**. The current implementation prioritizes:
 
-Technical validation
+* Learning
+* Technical validation
+* Iterative experimentation
 
-Iterative experimentation
+---
 
-🌍 Why this project?
+## 🌍 Why this project?
 
 Most beauty-tech AI systems struggle with:
 
-African hair textures
-
-Braids, twists, knots, and volume
-
-Cultural and aesthetic representation
+* African hair textures
+* Braids, twists, knots, and volume
+* Cultural and aesthetic representation
 
 This project asks:
 
-What would hair try-on AI look like if African hair was the starting point, not an edge case?
+> *What would hair try-on AI look like if African hair was the starting point, not an edge case?*
 
-✨ Current Features (MVP)
+---
 
-Web-based app deployed on Streamlit
+## ✨ Current Features (MVP)
 
-Accessible on Android & iOS via the browser
+* Web-based app deployed on **Streamlit**
+* Accessible on **Android & iOS via the browser**
+* User selfie upload
+* Face landmark detection using **MediaPipe Face Mesh**
+* Basic face-shape estimation (width, height, aspect ratio)
+* Heuristic-based hairstyle recommendations
+* 2D hairstyle try-on using transparent PNG overlays
+* Image download & social sharing links
+* WhatsApp booking call-to-action
+* Basic analytics logging (admin-only)
+* Dark, Afrofuturistic UI inspired by brand identity
 
-User selfie upload
+---
 
-Face landmark detection using MediaPipe Face Mesh
+## 🧠 Technical Overview
 
-Basic face-shape estimation (width, height, aspect ratio)
+**Tech stack:**
 
-Heuristic-based hairstyle recommendations
+* Python
+* Streamlit
+* OpenCV
+* MediaPipe
+* NumPy / PIL
 
-2D hairstyle try-on using transparent PNG overlays
+**Pipeline (simplified):**
 
-Image download & social sharing links
+1. User uploads a selfie
+2. Facial landmarks are detected
+3. Face geometry is estimated
+4. Rule-based logic recommends hairstyles
+5. Hairstyle overlays are resized and composited using alpha blending
 
-WhatsApp booking call-to-action
+---
 
-Basic analytics logging (admin-only)
-
-Dark, Afrofuturistic UI inspired by brand identity
-
-🧠 Technical Overview
-
-Tech stack:
-
-Python
-
-Streamlit
-
-OpenCV
-
-MediaPipe
-
-NumPy / PIL
-
-Pipeline (simplified):
-
-User uploads a selfie
-
-Facial landmarks are detected
-
-Face geometry is estimated
-
-Rule-based logic recommends hairstyles
-
-Hairstyle overlays are resized and composited using alpha blending
-
-⚠️ Known Limitations (By Design)
+## ⚠️ Known Limitations (By Design)
 
 The current MVP:
 
-Uses classical computer vision, not generative AI
+* Uses **classical computer vision**, not generative AI
+* Applies **2D overlays** (no volumetric modeling)
+* Does **not** model:
 
-Applies 2D overlays (no volumetric modeling)
+  * Hair texture dynamics
+  * Lighting adaptation
+  * Occlusion
+  * Identity-preserving synthesis
 
-Does not model:
+These limitations are **intentional** and help define the next research phase.
 
-Hair texture dynamics
+---
 
-Lighting adaptation
+## 🚀 Roadmap (Planned)
 
-Occlusion
+**Next phase:**
 
-Identity-preserving synthesis
+* Explore **GANs and Diffusion models**
+* Focus on:
 
-These limitations are intentional and help define the next research phase.
+  * African hair texture synthesis
+  * Volume & structure realism
+  * Identity preservation
+* Build or curate **African hair–focused datasets**
+* Transition from overlays → generative try-on
 
-🚀 Roadmap (Planned)
+---
 
-Next phase:
+## 📁 Repository Structure
 
-Explore GANs and Diffusion models
-
-Focus on:
-
-African hair texture synthesis
-
-Volume & structure realism
-
-Identity preservation
-
-Build or curate African hair–focused datasets
-
-Transition from overlays → generative try-on
-
-📁 Repository Structure
+```text
 .
 ├── app.py                # Main Streamlit app
 ├── requirements.txt      # Python dependencies
@@ -128,29 +112,41 @@ Transition from overlays → generative try-on
 ├── gallery/              # Saved results (optional)
 ├── logo.png              # Brand logo
 └── README.md             # Project documentation
+```
 
-🛠 Running Locally
+---
+
+## 🛠 Running Locally
+
+```bash
 pip install -r requirements.txt
 streamlit run app.py
+```
 
-🤝 Contributions & Feedback
+---
 
-This project is currently research-driven and experimental.
+## 🤝 Contributions & Feedback
+
+This project is currently **research-driven and experimental**.
 Feedback, discussions, and idea exchanges are welcome — especially around:
 
-Computer vision
+* Computer vision
+* Generative models
+* African-centered AI design
 
-Generative models
+---
 
-African-centered AI design
+## 📌 Disclaimer
 
-📌 Disclaimer
-
-This project is an exploratory MVP.
+This project is an **exploratory MVP**.
 It should not be considered production-ready or representative of final model performance.
 
-👩🏽‍💻 Author
+---
 
-Rebecca Ssesanga
+## 👩🏽‍💻 Author
+
+**Rebecca Ssesanga**
 Machine Learning Engineer (Research-Oriented)
 Computer Vision · Applied AI · African Innovation
+
+
