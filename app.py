@@ -6,322 +6,369 @@ from mediapipe import solutions as mp
 import io, os, time, csv
 import pandas as pd
 from datetime import datetime
+from urllib.parse import quote_plus
 
-# ================= PAGE CONFIG =================
+# =================================================
+# CONFIG
+# =================================================
+WHATSAPP_NUMBER = "256775668530"  # 0775668530
+APP_URL = "https://your-app-name.streamlit.app"  # update after deploy
+
 st.set_page_config(
     page_title="Nalybecks Afrofuturistic AI",
     page_icon="logo.png",
     layout="centered"
 )
 
-# ================= CSS =================
-st.markdown("""
+# =================================================
+# BRAND COLORS (FROM LOGO)
+# =================================================
+PRIMARY_PINK = "#E6007E"
+SECONDARY_PURPLE = "#B266FF"
+DARK_BG = "#0B0B0F"
+CARD_BG = "#161622"
+TEXT_LIGHT = "#EDEDED"
+
+# =================================================
+# GLOBAL CSS
+# =================================================
+st.markdown(f"""
 <style>
-body { background-color:#0b0b0f; }
-h1,h2,h3 { color: gold; text-align:center; }
-p,label { color:white; }
-.desc { font-size:12px; color:#ddd; text-align:center; }
-.card {
-    background:#1c1c2b; padding:10px; border-radius:15px;
-    border:2px solid gold; text-align:center; margin-bottom:10px;
-}
-.whatsapp {
-    background:#25D366; color:white; padding:14px;
-    border-radius:12px; text-align:center; font-weight:bold;
-}
-.footer { text-align:center; color:#aaa; margin-top:30px; }
+body {{
+    background-color: {DARK_BG};
+    color: {TEXT_LIGHT};
+}}
+
+.hero {{
+    text-align: center;
+    padding-top: 40px;
+}}
+
+.hero-title {{
+    color: {PRIMARY_PINK};
+    font-size: 34px;
+    font-weight: 700;
+}}
+
+.hero-subtitle {{
+    color: {SECONDARY_PURPLE};
+    font-size: 15px;
+}}
+
+.card {{
+    background: linear-gradient(180deg, {CARD_BG}, {DARK_BG});
+    padding: 28px;
+    border-radius: 22px;
+    border: 1.5px solid {PRIMARY_PINK};
+    box-shadow: 0 0 28px rgba(230, 0, 126, 0.25);
+    max-width: 900px;
+    margin: 28px auto;
+}}
+
+.desc {{
+    font-size: 13px;
+    text-align: center;
+}}
+
+button {{
+    background-color: {PRIMARY_PINK} !important;
+    color: white !important;
+    border-radius: 14px !important;
+    border: none !important;
+}}
+
+button:hover {{
+    background-color: #C4006B !important;
+}}
+
+.footer {{
+    text-align: center;
+    color: #999;
+    margin-top: 50px;
+    font-size: 13px;
+}}
 </style>
 """, unsafe_allow_html=True)
 
-# ================= LOGO =================
-if os.path.exists("logo.png"):
-    st.image("logo.png", width=140)
-
-st.markdown("<h1>Nalybecks Afrofuturistic AI</h1>", unsafe_allow_html=True)
-st.markdown("<h3>Wear Your Crown Beautifully — powered by AI</h3>", unsafe_allow_html=True)
-
-# ================= LOGIN =================
-st.markdown("## 👤 Login")
-
+# =================================================
+# SESSION STATE
+# =================================================
 if "user" not in st.session_state:
     st.session_state.user = None
+if "selected_style" not in st.session_state:
+    st.session_state.selected_style = None
 
+# =================================================
+# LOGIN (SINGLE CLEAN CARD)
+# =================================================
 if st.session_state.user is None:
-    username = st.text_input("Enter your name")
-    if st.button("Login"):
+
+    st.markdown("<div class='hero'>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1,2,1])
+    with c2:
+        st.image("logo.png", use_container_width=True)
+
+    st.markdown("<p class='hero-title'>Nalybecks Afrofuturistic AI</p>", unsafe_allow_html=True)
+    st.markdown("<p class='hero-subtitle'>Wear Your Crown Beautifully — powered by AI</p>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("### Enter Experience")
+    username = st.text_input("Your name")
+
+    if st.button("Continue"):
         if username.strip():
             st.session_state.user = username
-            st.success(f"Welcome {username} 👑")
-else:
-    st.success(f"Logged in as {st.session_state.user}")
-    if st.button("Logout"):
-        st.session_state.user = None
-        st.experimental_rerun()
+            st.rerun()
 
-# ================= SIDEBAR =================
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("<div class='footer'>© 2026 Nalybecks Hairstyles</div>", unsafe_allow_html=True)
+    st.stop()
+
+# =================================================
+# HEADER
+# =================================================
+c1, c2, c3 = st.columns([1,2,1])
+with c2:
+    st.image("logo.png", width=110)
+
+st.markdown(
+    f"<h2 style='text-align:center;color:{PRIMARY_PINK};'>Welcome, {st.session_state.user}</h2>",
+    unsafe_allow_html=True
+)
+
+# =================================================
+# SIDEBAR NAV
+# =================================================
 st.sidebar.title("Menu")
-page = st.sidebar.selectbox("Select Page", ["Try Hairstyle", "Analytics Dashboard"])
+page = st.sidebar.selectbox(
+    "Navigate",
+    ["Try Hairstyle", "Gallery", "Feedback", "AI Roadmap", "Analytics"]
+)
 
-# ================= ANALYTICS LOGGER =================
-def log_event(user, event, style=""):
+# =================================================
+# FACE MODEL
+# =================================================
+face_mesh = mp.face_mesh.FaceMesh(static_image_mode=True)
+
+# =================================================
+# ANALYTICS LOGGER
+# =================================================
+def log_event(event, style=""):
     os.makedirs("data", exist_ok=True)
     with open("data/analytics.csv", "a", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow([datetime.now(), user, event, style])
+        csv.writer(f).writerow(
+            [datetime.now(), st.session_state.user, event, style]
+        )
 
-# ================= AI RECOMMENDER =================
+# =================================================
+# AI RECOMMENDER (FACE-SHAPE LOGIC)
+# =================================================
 def recommend_hairstyle(face_width, face_height):
     ratio = face_height / face_width
     if ratio > 1.3:
-        return "twists.png", "Twists – Best for longer face shapes."
+        return "twists.png", "Twists balance longer face shapes."
     elif ratio > 1.1:
-        return "cornrows.png", "Cornrows – Balanced and elegant."
-    elif ratio > 0.9:
-        return "galactic_knots.png", "Galactic Knots – Bold Afrofuturistic look."
+        return "cornrows.png", "Cornrows suit balanced face shapes."
+    elif ratio > 0.95:
+        return "galactic_knots.png", "Galactic Knots make a bold statement."
     else:
-        return "afro_crown.png", "Afro Crown – Best for wider face shapes."
+        return "afro_crown.png", "Afro Crown enhances wider face shapes."
 
-# ================= FACE MODEL =================
-face_mesh = mp.face_mesh.FaceMesh(static_image_mode=True)
-
-# ================= SAFE OVERLAY =================
-def overlay_image(background, overlay, x, y):
-    h, w = overlay.shape[:2]
-
+# =================================================
+# IMAGE OVERLAY (SAFE)
+# =================================================
+def overlay_image(bg, overlay, x, y):
     if overlay.shape[2] == 3:
         overlay = cv2.cvtColor(overlay, cv2.COLOR_BGR2BGRA)
-
+    h, w = overlay.shape[:2]
     alpha = overlay[:, :, 3] / 255.0
-
     for c in range(3):
-        background[y:y+h, x:x+w, c] = (
-            (1 - alpha) * background[y:y+h, x:x+w, c]
-            + alpha * overlay[:, :, c]
+        bg[y:y+h, x:x+w, c] = (
+            (1 - alpha) * bg[y:y+h, x:x+w, c] +
+            alpha * overlay[:, :, c]
         )
-    return background
+    return bg
 
-# ================= HAIRSTYLES =================
+# =================================================
+# HAIRSTYLE CATEGORIES
+# =================================================
 categories = {
     "Protective Styles": {
-        "cornrows.png": "Cornrows – Classic protective style.",
-        "twists.png": "Twists – Soft elegant twists."
+        "cornrows.png": "Cornrows – Classic & protective",
+        "twists.png": "Twists – Soft & versatile"
     },
     "Royal Styles": {
-        "afro_crown.png": "Afro Crown – Royal silhouette.",
-        "galactic_knots.png": "Galactic Knots – Ancestral futuristic look."
+        "afro_crown.png": "Afro Crown – Regal volume",
+        "galactic_knots.png": "Galactic Knots – Afrofuturistic roots"
     },
     "Futuristic Styles": {
-        "futuristic_braided.png": "Galactic Braids – Bold cosmic braided design."
+        "futuristic_braided.png": "Galactic Braids – Sculptural future"
     }
 }
 
 # =================================================
-# ================= TRY HAIRSTYLE =================
+# TRY HAIRSTYLE
 # =================================================
 if page == "Try Hairstyle":
 
-    if not st.session_state.user:
-        st.info("Please login to use the app.")
-        st.stop()
+    st.markdown("## 📸 Upload Your Selfie")
+    uploaded = st.file_uploader("Choose an image", type=["jpg","png","jpeg"])
 
-    uploaded_file = st.file_uploader("📸 Upload your selfie", type=["jpg","png","jpeg"])
-
-    if "selected_style" not in st.session_state:
-        st.session_state.selected_style = None
-
-    result_image = None
-
-    if uploaded_file:
-        image = Image.open(uploaded_file)
-        img = np.array(image)
-
-        if img.shape[1] > 900:
-            scale = 900 / img.shape[1]
-            img = cv2.resize(img, (int(img.shape[1]*scale), int(img.shape[0]*scale)))
-
+    if uploaded:
+        img = np.array(Image.open(uploaded))
         rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        with st.spinner("✨ Applying Afrofuturistic hairstyle..."):
+        with st.spinner("✨ Applying Afrofuturistic AI..."):
             time.sleep(1)
             results = face_mesh.process(rgb)
 
         st.image(img, caption="Original Photo", width=350)
 
-        if not results.multi_face_landmarks:
-            st.warning("No face detected. Upload a clear selfie.")
-        else:
+        if results.multi_face_landmarks:
             lm = results.multi_face_landmarks[0]
-
             top = lm.landmark[10]
             chin = lm.landmark[152]
             left = lm.landmark[234]
             right = lm.landmark[454]
 
-            fy = int(top.y * img.shape[0])
             lx = int(left.x * img.shape[1])
             rx = int(right.x * img.shape[1])
+            fy = int(top.y * img.shape[0])
 
             face_width = rx - lx
             face_height = int((chin.y - top.y) * img.shape[0])
 
-            # AI Recommendation
             rec_style, rec_text = recommend_hairstyle(face_width, face_height)
 
-            st.markdown("## 🤖 AI Recommendation")
-            st.image(f"hairstyles/{rec_style}", width=150)
+            st.markdown("### 🤖 AI Recommendation")
+            st.image(f"hairstyles/{rec_style}", width=140)
             st.success(rec_text)
 
             if st.button("Apply Recommended Style"):
                 st.session_state.selected_style = rec_style
-                log_event(st.session_state.user, "apply_recommendation", rec_style)
+                log_event("ai_recommendation", rec_style)
 
-            def apply_hairstyle(style_file):
-                hair_path = f"hairstyles/{style_file}"
-
-                if not os.path.exists(hair_path):
-                    st.error(f"Missing file: {hair_path}")
-                    return img
-
-                hair = cv2.imread(hair_path, cv2.IMREAD_UNCHANGED)
-
-                if hair is None:
-                    st.error("Could not load hairstyle image.")
-                    return img
-
-                if hair.shape[2] == 3:
-                    hair = cv2.cvtColor(hair, cv2.COLOR_BGR2BGRA)
-
-                hair = cv2.resize(hair, (face_width, int(face_width * 0.8)))
-
-                x_offset = lx
-                y_offset = fy - hair.shape[0] + 20
-                if y_offset < 0:
-                    y_offset = 0
-
-                result = overlay_image(img.copy(), hair, x_offset, y_offset)
-
-                st.image(result, caption="✨ Your Afrofuturistic Look", width=350)
-
-                os.makedirs("gallery", exist_ok=True)
-                filename = f"gallery/{st.session_state.user}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-                Image.fromarray(result).save(filename)
-
-                log_event(st.session_state.user, "try_style", style_file)
-                return result
-
-            # CATEGORY TABS
-            tabs = st.tabs(list(categories.keys()))
-            for tab, (category, styles) in zip(tabs, categories.items()):
+            tabs = st.tabs(categories.keys())
+            for tab, styles in zip(tabs, categories.values()):
                 with tab:
                     cols = st.columns(2)
-                    i = 0
-                    for style, desc in styles.items():
+                    for i, (style, desc) in enumerate(styles.items()):
                         with cols[i % 2]:
                             st.image(f"hairstyles/{style}", width=140)
                             st.markdown(f"<p class='desc'>{desc}</p>", unsafe_allow_html=True)
                             if st.button(desc.split("–")[0], key=style):
                                 st.session_state.selected_style = style
-                        i += 1
 
             if st.session_state.selected_style:
-                result_image = apply_hairstyle(st.session_state.selected_style)
+                hair = cv2.imread(
+                    f"hairstyles/{st.session_state.selected_style}",
+                    cv2.IMREAD_UNCHANGED
+                )
+                hair = cv2.resize(hair, (face_width, int(face_width * 0.8)))
+                y_offset = max(0, fy - hair.shape[0] + 20)
 
-    # ================= DOWNLOAD + SHARE =================
-    if result_image is not None:
-        buf = io.BytesIO()
-        Image.fromarray(result_image).save(buf, format="PNG")
+                result = overlay_image(img.copy(), hair, lx, y_offset)
+                st.image(result, caption="✨ Your Afrofuturistic Look", width=350)
 
-        if st.download_button("⬇️ Download Your Look", buf.getvalue(), "nalybecks_ai.png", "image/png"):
-            log_event(st.session_state.user, "download", st.session_state.selected_style)
+                buf = io.BytesIO()
+                Image.fromarray(result).save(buf, format="PNG")
 
-        # Instagram
-        st.markdown("## 📸 Share on Instagram")
-        caption = """I just tried the Nalybecks Afrofuturistic AI hairstyle 👑✨
-#NalybecksAI #AfrofuturisticHair #WearYourCrownBeautifully #GalacticBraids"""
-        st.code(caption)
+                st.download_button("⬇️ Download Image", buf.getvalue(), "nalybecks_ai.png")
 
-        st.markdown("""
-<a href="https://www.instagram.com/" target="_blank">
-<div style="background:#E1306C; color:white; padding:14px; border-radius:12px; text-align:center;">
-📸 Open Instagram
-</div>
-</a>
-""", unsafe_allow_html=True)
+                # ----------- SHARE -----------
+                st.markdown("### 🔁 Share Your Look")
+                share_text = quote_plus(
+                    "I just tried an Afrofuturistic hairstyle using Nalybecks Afrofuturistic AI 👑✨"
+                )
 
-        # Facebook / WhatsApp / Twitter
-        app_url = "https://your-app-link.streamlit.app"
-        share_text = "I just tried Nalybecks Afrofuturistic AI hairstyle 👑✨"
+                c1, c2, c3, c4 = st.columns(4)
+                with c1:
+                    st.markdown(f"[WhatsApp](https://wa.me/?text={share_text}%20{APP_URL})")
+                with c2:
+                    st.markdown(f"[Facebook](https://www.facebook.com/sharer/sharer.php?u={APP_URL})")
+                with c3:
+                    st.markdown(f"[Twitter/X](https://twitter.com/intent/tweet?text={share_text}&url={APP_URL})")
+                with c4:
+                    st.markdown(f"[Instagram](https://www.instagram.com/)")
 
-        st.markdown(f"""
-<a href="https://www.facebook.com/sharer/sharer.php?u={app_url}" target="_blank">📘 Share on Facebook</a><br><br>
-<a href="https://wa.me/?text={share_text} {app_url}" target="_blank">📲 Share on WhatsApp</a><br><br>
-<a href="https://twitter.com/intent/tweet?text={share_text}&url={app_url}" target="_blank">🐦 Share on Twitter/X</a>
-""", unsafe_allow_html=True)
+                # ----------- BOOKING -----------
+                st.markdown("---")
+                st.markdown(
+                    f"""
+                    <a href="https://wa.me/{WHATSAPP_NUMBER}?text=Hello Nalybecks! I would like to book this hairstyle."
+                       target="_blank">
+                       <button>📲 Book on WhatsApp</button>
+                    </a>
+                    """,
+                    unsafe_allow_html=True
+                )
 
-        # WhatsApp Booking
-        phone_number = "256775668530"
-        whatsapp_url = f"https://wa.me/{phone_number}?text=Hello Nalybecks! I want to book this hairstyle."
-        st.markdown(f"""
-<a href="{whatsapp_url}" target="_blank">
-<div class="whatsapp">📲 Book This Hairstyle on WhatsApp</div>
-</a>
-""", unsafe_allow_html=True)
-
-    # ================= GALLERY =================
-    st.markdown("## 🖼️ Gallery")
+# =================================================
+# GALLERY
+# =================================================
+if page == "Gallery":
+    st.markdown("## 🖼 Gallery")
     if os.path.exists("gallery"):
-        imgs = os.listdir("gallery")
+        imgs = os.listdir("gallery")[-9:]
         cols = st.columns(3)
-        for i, imgf in enumerate(imgs[-6:]):
+        for i, f in enumerate(imgs):
             with cols[i % 3]:
-                st.image(f"gallery/{imgf}", width=120)
+                st.image(f"gallery/{f}", width=120)
 
-    # ================= FEEDBACK =================
+# =================================================
+# FEEDBACK
+# =================================================
+if page == "Feedback":
     st.markdown("## 📝 Feedback")
-    with st.form("feedback_form"):
-        name = st.text_input("Your Name")
-        feedback = st.text_area("Your feedback")
-        submitted = st.form_submit_button("Submit")
-        if submitted:
-            os.makedirs("data", exist_ok=True)
-            with open("data/feedback.txt","a") as f:
-                f.write(f"{name}: {feedback}\n")
-            st.success("Thank you for your feedback 💛")
+    with st.form("feedback"):
+        fb = st.text_area("Your feedback")
+        if st.form_submit_button("Submit"):
+            st.success("Thank you for your feedback 💖")
 
 # =================================================
-# ================= ANALYTICS =====================
+# AI ROADMAP (VISUAL)
 # =================================================
-if page == "Analytics Dashboard":
+if page == "AI Roadmap":
+    st.markdown("<div class='card'>", unsafe_allow_html=True)
+    st.markdown("""
+    ## 🚀 AI Evolution Roadmap
 
-    admin_users = ["Rebecca"]
+    **Now (MVP)**  
+    - Classical computer vision  
+    - Face landmarks + heuristic overlays  
 
-    if st.session_state.user not in admin_users:
+    **Next (Planned Upgrade)**  
+    - GANs & Diffusion models  
+    - African hair–first datasets  
+    - Realistic texture & volume synthesis  
+
+    **Why it matters**  
+    - Inclusive beauty-tech AI  
+    - African innovation & representation  
+    """)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# =================================================
+# ANALYTICS (ADMIN ONLY)
+# =================================================
+if page == "Analytics":
+    if st.session_state.user.lower() != "rebecca":
         st.warning("Admin access only.")
     else:
         st.markdown("## 📊 Analytics Dashboard")
-
         path = "data/analytics.csv"
-
-        if not os.path.exists(path):
-            st.info("No analytics data yet.")
-        else:
+        if os.path.exists(path):
             df = pd.read_csv(path, names=["time","user","event","style"])
-
-            st.metric("Total Users", df["user"].nunique())
-            st.metric("Total Events", len(df))
-
-            st.markdown("### Most Popular Hairstyles")
             st.bar_chart(df["style"].value_counts())
-
-            st.markdown("### Event Breakdown")
-            st.bar_chart(df["event"].value_counts())
-
             st.dataframe(df.tail(10))
 
-# ================= FOOTER =================
+# =================================================
+# FOOTER
+# =================================================
 st.markdown("""
 <div class="footer">
 Powered by Nalybecks Afrofuturistic AI<br>
-© 2026 Nalybecks Hairstyles | Wear Your Crown Beautifully
+Wear Your Crown Beautifully
 </div>
 """, unsafe_allow_html=True)
